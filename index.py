@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import requests
 import re
-from io import BytesIO
+from pathlib import Path
 
 def download_imagem(url):
     try:
@@ -19,21 +19,22 @@ def limpar_nome_arquivo(nome_arquivo):
     return re.sub(r'[<>:"/\\|?*]', '', nome_arquivo)
 
 def salvar_imagens(links):
-    pasta_downloads = os.path.join(os.path.expanduser("~"), "Downloads")  # Caminho para a pasta "Downloads" do usuário
+    # Usar Path.home() para garantir o caminho correto para a pasta Downloads
+    pasta_downloads = Path.home() / "Downloads"
 
     # Garantir que a pasta Downloads existe
-    if not os.path.exists(pasta_downloads):
-        os.makedirs(pasta_downloads)
+    if not pasta_downloads.exists():
+        pasta_downloads.mkdir(parents=True, exist_ok=True)
 
     for url in links:
         conteudo_imagem = download_imagem(url)
         if conteudo_imagem:
             # Extrair o nome do arquivo da URL e sanitizá-lo
             nome_arquivo = limpar_nome_arquivo(url.split("/")[-1].split('?')[0])
-            caminho_arquivo = os.path.join(pasta_downloads, nome_arquivo)  # Caminho completo do arquivo
+            caminho_arquivo = pasta_downloads / nome_arquivo  # Caminho completo do arquivo
             with open(caminho_arquivo, "wb") as arquivo:
                 arquivo.write(conteudo_imagem)
-            st.success(f"Baixado {nome_arquivo}")
+            st.success(f"Baixado {nome_arquivo} para {caminho_arquivo}")
 
 st.set_page_config(page_title="Indev Ribas - Aplicativo de Extração e Download de Links de Excel")
 

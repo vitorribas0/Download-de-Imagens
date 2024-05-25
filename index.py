@@ -21,6 +21,10 @@ def limpar_nome_arquivo(nome_arquivo):
 def salvar_imagens(links):
     pasta_downloads = os.path.join(os.path.expanduser("~"), "Downloads")  # Caminho para a pasta "Downloads" do usuário
 
+    # Garantir que a pasta Downloads existe
+    if not os.path.exists(pasta_downloads):
+        os.makedirs(pasta_downloads)
+
     for url in links:
         conteudo_imagem = download_imagem(url)
         if conteudo_imagem:
@@ -38,31 +42,36 @@ st.sidebar.title("Instruções")
 
 st.sidebar.markdown(
     """
-    **Instruções:**
+    **Como usar:**
 
-    Para carregar o arquivo, os links devem estar na coluna N.
+    1. Certifique-se de que os links estejam na coluna **N** do seu arquivo Excel.
+    2. Faça o upload do arquivo Excel usando o botão abaixo.
+    3. Clique no botão para baixar todas as imagens encontradas nos links.
     """
 )
 
 arquivo_upload = st.file_uploader("Escolha um arquivo Excel", type="xlsx")
 
 if arquivo_upload is not None:
-    df = pd.read_excel(arquivo_upload)
+    try:
+        df = pd.read_excel(arquivo_upload)
 
-    # Assumindo que a coluna N é a 14ª coluna (índice 13)
-    nome_coluna = df.columns[13]  # índice 13 corresponde à coluna N
+        # Assumindo que a coluna N é a 14ª coluna (índice 13)
+        nome_coluna = df.columns[13]  # índice 13 corresponde à coluna N
 
-    if nome_coluna:
-        links = df[nome_coluna].dropna().astype(str).apply(lambda x: x if x.startswith('http') else None).dropna().tolist()
+        if nome_coluna:
+            links = df[nome_coluna].dropna().astype(str).apply(lambda x: x if x.startswith('http') else None).dropna().tolist()
 
-        if links:
-            st.write(f"Encontrados {len(links)} links na coluna '{nome_coluna}':")
-            for link in links:
-                st.write(link)
+            if links:
+                st.write(f"Encontrados {len(links)} links na coluna '{nome_coluna}':")
+                for link in links:
+                    st.write(link)
 
-            if st.button("Baixar todas as imagens"):
-                salvar_imagens(links)
+                if st.button("Baixar todas as imagens"):
+                    salvar_imagens(links)
+            else:
+                st.write(f"Nenhum link encontrado na coluna '{nome_coluna}'.")
         else:
-            st.write(f"Nenhum link encontrado na coluna '{nome_coluna}'.")
-    else:
-        st.error(f"Coluna '{nome_coluna}' não existe no arquivo enviado.")
+            st.error(f"Coluna '{nome_coluna}' não existe no arquivo enviado.")
+    except Exception as e:
+        st.error(f"Erro ao ler o arquivo: {e}")

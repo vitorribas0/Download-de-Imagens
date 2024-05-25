@@ -1,9 +1,9 @@
-import os
 import streamlit as st
 import pandas as pd
 import requests
 import re
-from pathlib import Path
+from io import BytesIO
+from zipfile import ZipFile
 
 def download_imagem(url):
     try:
@@ -18,23 +18,15 @@ def limpar_nome_arquivo(nome_arquivo):
     # Remove caracteres inválidos
     return re.sub(r'[<>:"/\\|?*]', '', nome_arquivo)
 
-def salvar_imagens(links):
-    # Usar Path.home() para garantir o caminho correto para a pasta Downloads
-    pasta_downloads = Path.home() / "Downloads"
-
-    # Garantir que a pasta Downloads existe
-    if not pasta_downloads.exists():
-        pasta_downloads.mkdir(parents=True, exist_ok=True)
-
-    for url in links:
-        conteudo_imagem = download_imagem(url)
-        if conteudo_imagem:
-            # Extrair o nome do arquivo da URL e sanitizá-lo
-            nome_arquivo = limpar_nome_arquivo(url.split("/")[-1].split('?')[0])
-            caminho_arquivo = pasta_downloads / nome_arquivo  # Caminho completo do arquivo
-            with open(caminho_arquivo, "wb") as arquivo:
-                arquivo.write(conteudo_imagem)
-            st.success(f"Baixado {nome_arquivo} para {caminho_arquivo}")
+def criar_zip(links):
+    zip_buffer = BytesIO()
+    with ZipFile(zip_buffer, 'w') as zip_file:
+        for url in links:
+            conteudo_imagem = download_imagem(url)
+            if conteudo_imagem:
+                nome_arquivo = limpar_nome_arquivo(url.split("/")[-1].split('?')[0])
+                zip_file.writestr(nome_arquivo, conteudo_imagem)
+    return zip_buffer
 
 st.set_page_config(page_title="Indev Ribas - Aplicativo de Extração e Download de Links de Excel")
 
@@ -69,7 +61,13 @@ if arquivo_upload is not None:
                     st.write(link)
 
                 if st.button("Baixar todas as imagens"):
-                    salvar_imagens(links)
+                    zip_buffer = criar_zip(links)
+                    st.download_button(
+                        label="Baixar imagens em um arquivo ZIP",
+                        data=zip_buffer.getvalue(),
+                        file_name="imagens.zip",
+                        mime="application/zip"
+                    )
             else:
                 st.write(f"Nenhum link encontrado na coluna '{nome_coluna}'.")
         else:

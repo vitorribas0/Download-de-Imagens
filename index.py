@@ -54,7 +54,7 @@ if arquivo_upload is not None:
         # Assumindo que a coluna N é a 14ª coluna (índice 13), a coluna A é a primeira coluna (índice 0) e a coluna H é a oitava coluna (índice 7)
         coluna_links = df.columns[13]  # índice 13 corresponde à coluna N
         coluna_nomes = df.columns[0]   # índice 0 corresponde à coluna A
-        coluna_projetos = df.columns[10] # índice 7 corresponde à coluna K
+        coluna_projetos = df.columns[1] # índice 7 corresponde à coluna K
 
         if coluna_links and coluna_nomes and coluna_projetos:
             # Certificar que temos o mesmo número de entradas em todas as colunas relevantes
